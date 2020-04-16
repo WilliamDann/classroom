@@ -1,0 +1,78 @@
+NOTE: Use asyncio.sleep instead of time.sleep
+
+Phases:
+    ☐ Step one: Video chat without audio
+    ☐ Step two: audio & whiteboarding features
+    ☐ Step three: As many classroom tools as we can make
+
+Server:
+    ☐ Classroom
+        - ClassroomSettings settings
+        - Client[] connectedClients
+        - int host
+        - int port
+
+        ☐ start()
+            Starts the server via asyncio
+        
+        ☐ async register(userData)
+            Register a new user with the data they supplied 
+
+            ☐ user specified a name
+            ☐ generate userID & send to user
+            ☐ add new Client to connectedClients
+        
+        ☐ async unregister(userID)
+            Unregister a disconnected user
+
+            ☐ remove matching Client from connectedClients
+
+        ☐ async ingest(websocket, path)
+            Allows users to stream their webcam & audio to their Client
+
+            Format:
+                {
+                    "userID" : "asdf1234"
+                    "frame"  : "frameData"
+                }
+            
+            ☐ Compression needed!
+            ☐ Authentication needed
+        
+        ☐ async run(websocket, path)
+            Allow users to view the video of the connected clients
+
+            ☐ register viewer as new
+            ☐ unregister viewer when disconnected
+
+            ☐ only view clients currently talking
+            ☐ setting to only view main broadcaster
+
+    ☐ Client
+        Store information about a connected client
+        - isBroadcaster (if the client is a teacher)
+        - String name
+        - String id
+        - websockets.websocket websocket
+        - String frame ((base64 string of image) stores the lastest frame streamed to the client)
+
+        ☐ updateFrame(frame)
+            updates frame vairable. Should be a functions because we will want to 
+            do more things when the frame updates later
+
+Client:
+    Appearance:
+        ☐ Color scheme?
+        ☐ 
+    Functionality:
+        ☐ Settings dialog that generates a ClassroomSettings object
+        ☐ turn Client[] data from server into <img> tags and show videos
+    Video:
+        ☐ Get Webcam via getUserMedia()
+            NOTE: Use jpeg it is MUCH smaller than png
+
+            ☐ allow user to specify dimensions 
+            ☐ image compression?
+        
+        ☐ Connect to stream Websocket & send video
+        ☐ Connect to view websocket and get 
