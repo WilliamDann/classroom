@@ -11,7 +11,3 @@ class Client(dict):
     # update the user's video
     def updateFrame(self, frame):
         self.frame = frame
-
-class ClientEncoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__    

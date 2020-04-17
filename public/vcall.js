@@ -33,8 +33,8 @@ server.onmessage = message => {
 
             // start streaming
             setInterval(() => {
-                stream.send( JSON.stringify({ userID: userid, frame: getFrame() }) );
-            }, 300) // todo fps?
+                stream.send( JSON.stringify({ userID: userid, frame: LZString.compress(getFrame()) }) );
+            }, 100) // todo fps?
         } else {
             userid = message.data;
             next = false;
@@ -61,7 +61,7 @@ server.onmessage = message => {
                 document.body.appendChild(container);
             }
 
-            container.src = data[i].frame;
+            container.src = LZString.decompress(data[i].frame);
         }
     }
 }
