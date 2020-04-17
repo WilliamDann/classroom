@@ -6,28 +6,28 @@ Phases:
     ☐ Step three: As many classroom tools as we can make
 
 Server:
-    ☐ Classroom
-        - ClassroomSettings settings
-        - Client[] connectedClients
-        - int host
-        - int port
+    ✔ Classroom @done(20-04-17 14:15)
+        ✔ ClassroomSettings settings @done(20-04-17 14:15)
+        ✔ Client[] connectedClients @done(20-04-17 14:15)
+        ✔ int host @done(20-04-17 14:15)
+        ✔ int port @done(20-04-17 14:15)
 
-        ☐ start()
+        ✔ start() @done(20-04-17 14:15)
             Starts the server via asuyncio
         
-        ☐ async register(userData)
+        ✔ async register(userData) @done(20-04-17 14:15)
             Register a new user with the data they supplied 
 
             ☐ user specified a name
-            ☐ generate userID & send to user
-            ☐ add new Client to connectedClients
+            ✔ generate userID & send to user @done(20-04-17 14:15)
+            ✔ add new Client to connectedClients @done(20-04-17 14:15)
         
-        ☐ async unregister(userID)
+        ✔ async unregister(userID) @done(20-04-17 14:15)
             Unregister a disconnected user
 
-            ☐ remove matching Client from connectedClients
+            ✔ remove matching Client from connectedClients @done(20-04-17 14:15)
 
-        ☐ async ingest(websocket, path)
+        ✔ async ingest(websocket, path) @done(20-04-17 14:15)
             Allows users to stream their webcam & audio to their Client
 
             Format:
@@ -39,11 +39,11 @@ Server:
             ☐ Compression needed!
             ☐ Authentication needed
         
-        ☐ async run(websocket, path)
+        ✔ async run(websocket, path) @done(20-04-17 14:15)
             Allow users to view the video of the connected clients
 
-            ☐ register viewer as new
-            ☐ unregister viewer when disconnected
+            ✔ register viewer as new @done(20-04-17 14:15)
+            ✔ unregister viewer when disconnected @done(20-04-17 14:15)
 
             ☐ only view clients currently talking
             ☐ setting to only view main broadcaster
@@ -66,13 +66,13 @@ Client:
         ☐ 
     Functionality:
         ☐ Settings dialog that generates a ClassroomSettings object
-        ☐ turn Client[] data from server into <img> tags and show videos
+        ✔ turn Client[] data from server into <img> tags and show videos @done(20-04-17 14:15)
     Video:
-        ☐ Get Webcam via getUserMedia()
+        ✔ Get Webcam via getUserMedia() @done(20-04-17 14:15)
             NOTE: Use jpeg it is MUCH smaller than png
 
             ☐ allow user to specify dimensions 
             ☐ image compression?
         
-        ☐ Connect to stream Websocket & send video
-        ☐ Connect to view websocket and get 
+        ✔ Connect to stream Websocket & send video @done(20-04-17 14:15)
+        ✔ Connect to view websocket and get @done(20-04-17 14:15)
