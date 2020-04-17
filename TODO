@@ -48,15 +48,15 @@ Server:
             ☐ only view clients currently talking
             ☐ setting to only view main broadcaster
 
-    ☐ Client
+    ✔ Client @done(20-04-17 09:56)
         Store information about a connected client
-        - isBroadcaster (if the client is a teacher)
-        - String name
-        - String id
-        - websockets.websocket websocket
-        - String frame ((base64 string of image) stores the lastest frame streamed to the client)
+        ✔ isBroadcaster (if the client is a teacher) @done(20-04-17 09:56)
+        ✔ String name @done(20-04-17 09:56)
+        ✔ String id @done(20-04-17 09:56)
+        ✔ websockets.websocket websocket @done(20-04-17 09:56)
+        ✔ String frame ((base64 string of image) stores the lastest frame streamed to the client) @done(20-04-17 09:56)
 
-        ☐ updateFrame(frame)
+        ✔ updateFrame(frame) @done(20-04-17 09:56)
             updates frame vairable. Should be a functions because we will want to 
             do more things when the frame updates later
 
