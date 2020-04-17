@@ -81,7 +81,7 @@ class Classroom:
                     break
 
                 user["frame"] = data["frame"]
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(0.03)
         except websockets.ConnectionClosed as e:
             raise e
         except Exception as e:
@@ -96,7 +96,7 @@ class Classroom:
             while True:
                 # send data
                 await websocket.send(json.dumps(self.connectedClients))
-                await asyncio.sleep(0.1) # todo maybe change fps?
+                await asyncio.sleep(0.3) # todo maybe change fps?
         except websockets.ConnectionClosed as e:
             pass
         finally:

@@ -1,13 +1,12 @@
 var server = new WebSocket("ws://localhost:8080");
 var stream = new WebSocket("ws://localhost:8081");
 
-const display = document.querySelector('#serverdata');
 const video = document.querySelector('#video');
 
 var userid = null;
 
 // get webcam access
-navigator.mediaDevices.getUserMedia({video: {width: 360, height: 360}}).then((stream) => video.srcObject = stream);
+navigator.mediaDevices.getUserMedia({video: {width: 240, height: 240}}).then((stream) => video.srcObject = stream);
 
 function getFrame() {
     const canvas = document.createElement('canvas');
@@ -35,7 +34,7 @@ server.onmessage = message => {
             // start streaming
             setInterval(() => {
                 stream.send( JSON.stringify({ userID: userid, frame: getFrame() }) );
-            }, 100) // todo fps?
+            }, 300) // todo fps?
         } else {
             userid = message.data;
             next = false;
@@ -51,5 +50,18 @@ server.onmessage = message => {
         next = 'uid';
     }
 
-    display.src = JSON.parse(message.data)[0].frame;
+    if (message.data != 'null') {
+        var data = JSON.parse(message.data);
+
+        for (var i = 0; i < data.length; i++) {
+            var container = document.querySelector("#" + data[i].userID)
+            if (!container) {
+                container = document.createElement("img");
+                container.id = data[i].userID;
+                document.body.appendChild(container);
+            }
+
+            container.src = data[i].frame;
+        }
+    }
 }
