@@ -1,4 +1,4 @@
-from client import Client
+from client import Client, ClientEncoder
 import websockets
 import asyncio
 import json
@@ -37,12 +37,12 @@ class Classroom:
     # get a user by their id
     def getUserByID(self, uid):
         for user in self.connectedClients:
-            if user.userID == uid:
+            if user["userID"] == uid:
                 return user
         return -1
 
     # unregister a user
-    async def unregster(self, websocket, path):
+    async def unregister(self, websocket):
         for user in self.connectedClients:
             if user.websocket == websocket:
                 self.connectedClients.remove(user)
@@ -51,53 +51,53 @@ class Classroom:
         return -1 # did not find user
 
     # register a user
-    async def register(self, websocket, path):
+    async def register(self, websocket):
         try:
             await websocket.send("userdata") # request user for their information
             userData = json.loads(await websocket.recv())
             uid = self.generateID()
 
             # create user
-            self.connectedClients.append(Client(uid, userData.name, websocket, userData.isBroadcaster))
+            client = Client(uid, userData["username"], websocket, userData["isBroadcaster"])
+            self.connectedClients.append(client)
 
             await websocket.send("set userID")
             await websocket.send(uid)
 
-        except:
+            return client
+        except Exception as e:
             await websocket.send("Error: incorrect format")
 
     # streaming websocket server
     async def ingest(self, websocket, path):
         bad_frames = 0
-        while True:
-            try:
+        try:
+            while True:
                 data = json.loads(await websocket.recv())
-                user = self.getUserByID(data.userID)
+                user = self.getUserByID(data["userID"])
 
                 if (user == -1):
                     await websocket.send("Error: userID does not exist")
                     break
 
-                user.frame = data.frame
+                user["frame"] = data["frame"]
                 await asyncio.sleep(0.01)
-            except websockets.ConnectionClosed as e:
-                break
-            except Exception as e:
-                bad_frames += 1
-
-                await websocket.send("Error: bad frame data")
-                if (bad_frames >= 500):
-                    break
-                continue
+        except websockets.ConnectionClosed as e:
+            raise e
+        except Exception as e:
+            bad_frames += 1
+            await websocket.send("Error: bad frame data")
 
     # viewer websocket server
     async def run(self, websocket, path):
-        self.register(websocket, path)
+        client = await self.register(websocket)
 
-        while True:
-            try:
+        try:
+            while True:
                 # send data
                 await websocket.send(json.dumps(self.connectedClients))
                 await asyncio.sleep(0.1) # todo maybe change fps?
-            finally:
-                self.connectedClients.remove(websocket)
+        except websockets.ConnectionClosed as e:
+            pass
+        finally:
+            await self.unregister(websocket)

@@ -26,10 +26,10 @@ server.onopen = () => {
 
 var next = false
 server.onmessage = message => {
-
+    
     if (next == 'uid') {
         if (!userid) {
-            userid = message;
+            userid = message.data;
             next = false;
 
             // start streaming
@@ -37,17 +37,19 @@ server.onmessage = message => {
                 stream.send( JSON.stringify({ userID: userid, frame: getFrame() }) );
             }, 100) // todo fps?
         } else {
-            userid = message;
+            userid = message.data;
             next = false;
         }
     }
 
-    if (message == 'userdata') {
+    if (message.data == 'userdata') {
         // todo get userdata from user
         server.send(JSON.stringify({ username: "TestUser", isBroadcaster: false }));
     }
 
-    if (message == "set userID") {
+    if (message.data == "set userID") {
         next = 'uid';
     }
+
+    display.src = JSON.parse(message.data)[0].frame;
 }
