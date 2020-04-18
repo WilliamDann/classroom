@@ -6,7 +6,7 @@ const video = document.querySelector('#video');
 var userid = null;
 
 // get webcam access
-navigator.mediaDevices.getUserMedia({video: {width: 240, height: 240}}).then((stream) => video.srcObject = stream);
+navigator.mediaDevices.getUserMedia({video: {width: 100, height: 100}}).then((stream) => video.srcObject = stream);
 
 function getFrame() {
     const canvas = document.createElement('canvas');
@@ -34,7 +34,7 @@ server.onmessage = message => {
             // start streaming
             setInterval(() => {
                 stream.send( JSON.stringify({ userID: userid, frame: LZString.compress(getFrame()) }) );
-            }, 100) // todo fps?
+            }, 30) // todo fps?
         } else {
             userid = message.data;
             next = false;
@@ -59,6 +59,8 @@ server.onmessage = message => {
                 container = document.createElement("img");
                 container.id = data[i].userID;
                 document.body.appendChild(container);
+                container.width = "480px"
+                container.height = "480px"
             }
 
             container.src = LZString.decompress(data[i].frame);
