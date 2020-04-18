@@ -2,6 +2,7 @@ import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, 
 import { ExitToApp, AccountMultiple as People } from 'mdi-material-ui';
 import { makeStyles } from '@material-ui/core/styles';
 import CanvasDraw from "react-canvas-draw";
+import ChatWindow from './ChatWindow'
 
 const useStyles = makeStyles(() => ({
 	root: {
@@ -45,6 +46,10 @@ function RoomContents(props) {
 						</List>
 					</Drawer>
 					<CanvasDraw></CanvasDraw>
+					<ChatWindow items={[ 
+						{name: "test", text:"test message!"}
+					]}></ChatWindow>
+
 		</div>
 	);
 }

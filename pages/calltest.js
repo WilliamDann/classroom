@@ -37,6 +37,14 @@ export default function Index() {
 				startStreaming(data.socket);
 			}
 		});
+
+		socket.current.on("chat-mesage", async data => {
+			await peerConnection.current.setRemoteDescription(
+				new RTCSessionDescription(data.answer)
+			);
+
+			console.log(data)
+		});
 		return () => socket.current.disconnect();
 	}, []);
 
