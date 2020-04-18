@@ -1,90 +1,74 @@
-import { Box, Button } from '@material-ui/core';
-import io from 'socket.io-client';
+import { AppBar, Toolbar, Typography, Button, Box, Card } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import { GoogleClassroom } from 'mdi-material-ui';
+import dynamic from 'next/dynamic';
+import Rooms from '../src/Rooms';
 
-export default function Index() {
-	const localVideoEl = React.useRef();
-	const remoteVideoEl = React.useRef();
+// const Rooms = dynamic(() => import('../src/Rooms'), { ssr: false });
 
-	const peerConnection = React.useRef(null);
-	const [inCall, setInCall] = React.useState(false);
-	const socket = React.useRef(null);
-	const [users, setUsers] = React.useState([]);
-
-	React.useEffect(() => {
-		socket.current = io();
-		socket.current.on("update-user-list", ({ users }) => {
-			setUsers(users)
-		});
-		socket.current.on("call-made", async data => {
-			await peerConnection.current.setRemoteDescription(
-				new RTCSessionDescription(data.offer)
-			);
-			const answer = await peerConnection.current.createAnswer();
-			await peerConnection.current.setLocalDescription(new RTCSessionDescription(answer));
-
-			socket.current.emit("make-answer", {
-				answer,
-				to: data.socket
-			});
-		});
-		socket.current.on("answer-made", async data => {
-			await peerConnection.current.setRemoteDescription(
-				new RTCSessionDescription(data.answer)
-			);
-
-			if (!inCall) {
-				setInCall(true);
-				startStreaming(data.socket);
-			}
-		});
-		return () => socket.current.disconnect();
-	}, []);
-
-	console.log("Users", users);
-
-	React.useEffect(() => {
-		peerConnection.current = new RTCPeerConnection();
-		peerConnection.current.ontrack = ({streams: [stream]}) => {
-			remoteVideoEl.current.srcObject = stream;
+const useStyles = makeStyles((theme) => ({
+	root: {
+		height: '100%'
+	},
+	login: {
+		marginRight: theme.spacing(2),
+		marginLeft: 'auto'
+	},
+	dotted: {
+		border: '2px dashed #424242',
+		background: 'transparent',
+		transition: '.2s',
+		minWidth: 300,
+		minHeight: 200,
+		width: '75vw',
+		height: '75vh',
+		margin: '50px auto',
+		'&:hover': {
+			cursor: 'pointer',
+			background: '#4242422d'
+		},
+		'& > div': {
+			display: 'block',
+			top: '50%',
+			left: '50%',
+			position: 'relative',
+			transform: 'translate(-50%, -50%)',
+			color: 'grey',
+			textAlign: 'center',
+			fontSize: '48px'
 		}
-		navigator.getUserMedia(
-			{ video: { width: 240, height: 240 } },
-			stream => {
-				localVideoEl.current.srcObject = stream;
-				stream.getTracks().forEach(track => peerConnection.current.addTrack(track, stream));
-			},
-			error => {
-				console.warn(error);
-			}
-		);
-		return () => peerConnection.current.close();
-	}, []);
-
-	async function startStreaming(user) {
-		const offer = await peerConnection.current.createOffer();
-		await peerConnection.current.setLocalDescription(new RTCSessionDescription(offer));
-
-		socket.current.emit("call-user", {
-			offer,
-			to: user
-		});
 	}
+}));
+
+export default function HomePage() {
+	const classes = useStyles();
+	const [inRoom, setInRoom] = React.useState('0');
 
 	return (
-		<Box>
-			<video autoPlay ref={localVideoEl} />
-			<video autoPlay ref={remoteVideoEl} />
-			<br />
-			My ID: {socket.current && socket.current.id}
-			<br />
-			<br />
-			<br />
-			Connect to: 
-			{users.map(user => (
-				<Button color="primary" disabled={inCall || user === socket.current.id} key={user} onClick={() => startStreaming(user)} variant="contained">
-					{user}
-				</Button>
-			))}
+		<Box className={classes.root}>
+			<AppBar position="static">
+				<Toolbar>
+					<Typography variant="h4">
+						Classroom
+    			</Typography>
+					<Button color="inherit" className={classes.login}>Login</Button>
+				</Toolbar>
+			</AppBar>
+			<Rooms
+				inRoom={inRoom}
+				rooms={[
+					{ id: '0', color: 'red', name: "Test Room", people: ["Otto", "William"] },
+					{ id: '1', color: 'orange' },
+					{ id: '2', color: 'yellow' },
+					{ id: '3', color: 'green' },
+					{ id: '4', color: 'blue' },
+					{ id: '5', color: 'indigo' },
+					{ id: '6', color: 'purple' },
+					{ id: '7', color: 'violet' },
+				]}
+				onClick={({ id }) => setInRoom(id)}
+				onExit={() => setInRoom(null)}
+			/>
 		</Box>
 	);
 }

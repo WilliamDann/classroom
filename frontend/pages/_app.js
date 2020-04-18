@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import theme from '../src/theme';
+import '../src/css/index.css';
 
 export default function ClassroomApp(props) {
   const { Component, pageProps } = props;

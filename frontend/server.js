@@ -23,12 +23,14 @@ io.on('connection', socket => {
 			users: Array.from(sockets.values())
 		});
 		socket.on("call-user", data => {
+			console.log("Call from", socket.id, "to", data.to);
 			socket.to(data.to).emit("call-made", {
 				offer: data.offer,
 				socket: socket.id
 			});
 		});
 		socket.on("make-answer", data => {
+			console.log("Answer from", socket.id, "to", data.to);
 			socket.to(data.to).emit("answer-made", {
 				socket: socket.id,
 				answer: data.answer
