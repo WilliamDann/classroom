@@ -1,4 +1,4 @@
-import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar } from '@material-ui/core';
+import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar, Fade } from '@material-ui/core';
 import { ExitToApp, AccountMultiple as People } from 'mdi-material-ui';
 import { makeStyles } from '@material-ui/core/styles';
 import CanvasDraw from "react-canvas-draw";
@@ -19,21 +19,18 @@ const useStyles = makeStyles(() => ({
 	}
 }));
 
-export default function Room(props) {
+function RoomContents(props) {
 	const { room, onClick, selected, onExit } = props;
 	const classes = useStyles(props);
 	const [drawerOpen, setDrawerOpen] = React.useState(false);
-
 	return (
-		<Card className={classes.root} onClick={selected ? null : onClick}>
-			{selected ?
-				<>
+		<div style={props.style}>
 					<Toolbar>
 						<Typography variant="h6" className={classes.title}>{room.name}</Typography>
 						<IconButton onClick={() => setDrawerOpen(true)} >
 							<People />
 						</IconButton>
-						<IconButton onClick={() => onExit()} >
+						<IconButton onClick={onExit} >
 							<ExitToApp />
 						</IconButton>
 					</Toolbar>
@@ -48,9 +45,21 @@ export default function Room(props) {
 						</List>
 					</Drawer>
 					<CanvasDraw></CanvasDraw>
-				</> :
-				<p>Join Room</p>
-			}
+		</div>
+	);
+}
+
+export default function Room(props) {
+	const { onClick, selected } = props;
+	const classes = useStyles(props);
+
+	if (props.room.id === '0')
+	console.log(selected);
+	return (
+		<Card className={classes.root} onClick={selected ? null : onClick}>
+			<Fade in={selected} timeout={1000} mountOnEnter={true} unmountOnExit={true}>
+				<RoomContents {...props} />
+			</Fade>
 		</Card>
 	);
 }
