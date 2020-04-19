@@ -1,9 +1,10 @@
-import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar, Fade } from '@material-ui/core';
-import { ExitToApp, AccountMultiple as People } from 'mdi-material-ui';
+import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar, Fade, Box, Button } from '@material-ui/core';
+import { ExitToApp, AccountMultiple as People, Table, TableEdit } from 'mdi-material-ui';
 import { makeStyles } from '@material-ui/core/styles';
 import { Responsive } from 'react-grid-layout';
 
 import { Whiteboard } from './Whiteboard';
+import { Chat } from './Chat';
 
 const useStyles = makeStyles(() => ({
 	root: {
@@ -25,16 +26,8 @@ const useStyles = makeStyles(() => ({
 			'&.react-draggable-dragging': {
 				zIndex: 3
 			},
-			'&>.drag-handle': {
-				position: 'absolute',
-				width: '100%',
-				height: 20,
-				top: 2,
-				right: 0,
-				cursor: 'move',
-				borderTop: '2px solid rgba(255, 255, 255, 0.4)'
-			},
 			'&>.react-resizable-handle': {
+				display: ({ edit }) => edit ? 'block' : 'none',
 				position: 'absolute',
 				width: 20,
 				height: 20,
@@ -48,8 +41,8 @@ const useStyles = makeStyles(() => ({
 					bottom: 3,
 					width: 5,
 					height: 5,
-					borderRight: '2px solid rgba(255, 255, 255, 0.4)',
-					borderBottom: '2px solid rgba(255, 255, 255, 0.4)'
+					borderRight: '2px solid white',
+					borderBottom: '2px solid white'
 				}
 			}
 		},
@@ -60,29 +53,46 @@ const useStyles = makeStyles(() => ({
 			userSelect: 'none',
 			zIndex: 2,
 		}
+	},
+	dragHandle: {
+		position: 'absolute',
+		width: '100%',
+		height: '100%',
+		cursor: 'move',
+		background: 'rgba(255, 255, 255, 0.1)'
 	}
 }));
 
 function RoomContents(props) {
 	const { room, onClick, selected, onExit, height, width } = props;
-	const classes = useStyles(props);
 	const [drawerOpen, setDrawerOpen] = React.useState(false);
 
 	const layout = [
 		{ i: 'whiteboard', x: 0, y: 0, w: 2, h: 4, minW: 2 },
 		{ i: 'chat', x: 2, y: 2, w: 1, h: 2 },
 		{ i: 'video', x: 2, y: 0, w: 2, h: 2 },
+		{ i: 'selfvideo', x: 4, y: 0, w: 1, h: 1 },
 	];
 	const smallLayout = [
 		{ i: 'whiteboard', x: 0, y: 0, w: 2, h: 2, minW: 2 },
 		{ i: 'chat', x: 0, y: 2, w: 1, h: 2 },
 		{ i: 'video', x: 1, y: 2, w: 1, h: 2 },
+		{ i: 'selfvideo', x: 0, y: 4, w: 2, h: 1 },
 	];
+
+	const [editingLayout, setEditingLayout] = React.useState(false);
+
+	const classes = useStyles({ ...props, edit: editingLayout });
+	const editingShown = { display: editingLayout ? 'flex' : 'none' };
+	const editingHidden = editingLayout ? { opacity: 0, pointerEvents: 'none', height: '100%', width: '100%' } : { height: '100%', width: '100%' };
 
 	return (
 		<div style={props.style}>
 			<Toolbar>
-				<Typography variant="h6" className={classes.title}>{room.name}</Typography>
+				<Typography variant="h6" className={classes.title}>{room.name}{editingLayout && " - editing layout"}</Typography>
+				<IconButton onClick={() => setEditingLayout(!editingLayout)} >
+					{editingLayout ? <Table /> : <TableEdit />}
+				</IconButton>
 				<IconButton onClick={() => setDrawerOpen(true)} >
 					<People />
 				</IconButton>
@@ -112,11 +122,44 @@ function RoomContents(props) {
 				margin={[0, 0]}
 				containerPadding={[0, 0]}
 				// compactType="horizontal"
-				draggableHandle=".drag-handle"
+				draggableHandle={"." + classes.dragHandle}
 			>
-				<Card key="whiteboard"><span className="drag-handle"></span><Whiteboard /></Card>
-				<Card key="chat"><span className="drag-handle"></span></Card>
-				<Card key="video"><span className="drag-handle"></span>video</Card>
+				<Card key="whiteboard" variant="outlined">
+					<Box style={editingShown} display="flex" justifyContent="center" height="100%" flexDirection="column">
+						<span className={classes.dragHandle} />
+						<Typography variant="h4" align="center">Whiteboard</Typography>
+					</Box>
+					<div style={editingHidden}>
+						<Whiteboard />
+					</div>
+				</Card>
+				<Card key="chat" variant="outlined">
+					<Box style={editingShown} display="flex" justifyContent="center" height="100%" flexDirection="column">
+						<span className={classes.dragHandle} />
+						<Typography variant="h4" align="center">Chat</Typography>
+					</Box>
+					<div style={editingHidden}>
+						<Chat />
+					</div>
+				</Card>
+				<Card key="video" variant="outlined">
+					<Box style={editingShown} display="flex" justifyContent="center" height="100%" flexDirection="column">
+						<span className={classes.dragHandle} />
+						<Typography variant="h4" align="center">Video</Typography>
+					</Box>
+					<div style={editingHidden}>
+						Video
+					</div>
+				</Card>
+				<Card key="selfvideo" variant="outlined">
+					<Box style={editingShown} display="flex" justifyContent="center" height="100%" flexDirection="column">
+						<span className={classes.dragHandle} />
+						<Typography variant="h4" align="center">Webcam</Typography>
+					</Box>
+					<div style={editingHidden}>
+						Self-Video
+					</div>
+				</Card>
 			</Responsive>
 		</div>
 	);

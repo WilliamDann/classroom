@@ -61,7 +61,7 @@ export function Whiteboard() {
 	const [colorPickerOpen, setColorPickerOpen] = React.useState(false);
 	const [colorAnchor, setColorAnchor] = React.useState(null);
 
-	const [brushSize, setBrushSize] = React.useState(10);
+	const [brushSize, setBrushSize] = React.useState(8);
 	const [sizePickerOpen, setSizePickerOpen] = React.useState(false);
 	const [sizeAnchor, setSizeAnchor] = React.useState(null);
 
@@ -79,7 +79,6 @@ export function Whiteboard() {
 	};
 	height = Math.max(height, 50);
 	width = Math.max(width, 50);
-	console.log(height, width);
 	return (
 		<div className={classes.root}  {...bind}>
 			<Paper elevation={0} className={classes.paper}>
