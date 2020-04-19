@@ -78,6 +78,8 @@ export default function Rooms(props) {
 							onClick(item.room);
 						}}
 						onExit={onExit}
+						height={item.height}
+						width={item.width}
 					/>
 				</a.div>
 			))}
