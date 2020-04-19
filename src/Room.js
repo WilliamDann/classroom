@@ -151,7 +151,7 @@ function RoomContents(props) {
 						<Typography variant="h4" align="center">Whiteboard</Typography>
 					</Box>
 					<div style={editingHidden}>
-						<Whiteboard />
+						<Whiteboard room={room} />
 					</div>
 				</Card>
 				<Card key="chat" variant="outlined">

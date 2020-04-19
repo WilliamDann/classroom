@@ -6,6 +6,7 @@ import ResizeObserver from 'resize-observer-polyfill';
 
 import CanvasDraw from "react-canvas-draw";
 import { BlockPicker } from "react-color";
+import { SocketContext } from '../pages/index';
 
 function useMeasure() {
 	const ref = React.useRef()
@@ -51,7 +52,66 @@ const styler = withStyles((theme) => ({
 const StyledToggleButtonGroup = styler(ToggleButtonGroup);
 const StyledButtonGroup = styler(ButtonGroup);
 
-export function Whiteboard() {
+export function Whiteboard({ room }) {
+	const socket = React.useContext(SocketContext);
+	React.useEffect(() => {
+		const draw = ({ data }) => {
+			switch (data.type) {
+				case 'lines':
+					canvas.current.simulateDrawingLines({ lines: data.lines, immediate: false });
+					break;
+				case 'undo':
+					canvas.current.undo()
+					break;
+				case 'clear':
+					canvas.current.clear();
+					break;
+			}
+		};
+		const chat = (message) => {
+			if (room.owner !== socket.id) return;
+			if (message.type === 'join') {
+				// Sync board to new user
+				socket.emit('whiteboard', {
+					target: message.author,
+					type: 'lines',
+					lines: canvas.current.lines
+				});
+			}
+		};
+		socket.on('chat', chat);
+		socket.on('whiteboard', draw);
+		return () => {
+			socket.off('chat', chat);
+			socket.off('whiteboard', draw);
+		};
+	}, [socket]);
+
+	const sendDraw = (canvas, type) => {
+		if (type !== 'line') return;
+		if (room.owner === socket.id)
+			socket.emit('whiteboard', {
+				type: 'lines',
+				lines: [canvas.lines[canvas.lines.length - 1]]
+			});
+	};
+	const doUndo = () => {
+		if (room.owner === socket.id) {
+			socket.emit('whiteboard', {
+				type: 'undo',
+			});
+			canvas.current.undo();
+		}
+	}
+	const doClear = () => {
+		if (room.owner === socket.id) {
+			socket.emit('whiteboard', {
+				type: 'clear',
+			});
+			canvas.current.clear();
+		}
+	}
+
 	var [bind, { width, height }] = useMeasure();
 	const classes = useStyles({ width, height });
 	const canvas = React.useRef();
@@ -80,8 +140,8 @@ export function Whiteboard() {
 	height = Math.max(height, 50);
 	width = Math.max(width, 50);
 	return (
-		<div className={classes.root}  {...bind}>
-			<Paper elevation={0} className={classes.paper}>
+		<div className={classes.root} {...bind}>
+			{room.owner === socket.id && <Paper elevation={0} className={classes.paper}>
 				<StyledToggleButtonGroup size="small" exclusive value={tool} onChange={(_, t) => setTool(t)}>
 					<ToggleButton value="pen">
 						<Pen />
@@ -92,11 +152,11 @@ export function Whiteboard() {
 				</StyledToggleButtonGroup>
 				<Divider orientation="vertical" className={classes.divider} />
 				<StyledButtonGroup size="small">
-					<Button onClick={() => canvas.current.undo()}>
+					<Button onClick={doUndo}>
 						<Undo />
 					</Button>
-					<Button>
-						<DeleteOutline onClick={() => canvas.current.clear()} />
+					<Button onClick={doClear}>
+						<DeleteOutline />
 					</Button>
 				</StyledButtonGroup>
 				<Divider orientation="vertical" className={classes.divider} />
@@ -132,8 +192,10 @@ export function Whiteboard() {
 						</Popover>
 					</Button>
 				</StyledButtonGroup>
-			</Paper>
+			</Paper>}
 			<CanvasDraw
+				onChange={sendDraw}
+				immediateLoading={true}
 				className={classes.canvas}
 				ref={canvas}
 				brushRadius={brushSize}
@@ -141,6 +203,7 @@ export function Whiteboard() {
 				erase={tool === 'eraser'}
 				canvasHeight={height}
 				canvasWidth={width}
+				disabled={room.owner !== socket.id}
 			/>
 		</div>
 	);

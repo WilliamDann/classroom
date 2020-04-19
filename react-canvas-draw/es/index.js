@@ -74,7 +74,7 @@ var _default = (_temp = _class = function (_PureComponent) {
       var lines = _this.lines.slice(0, -1);
       _this.clear();
       _this.simulateDrawingLines({ lines: lines, immediate: true });
-      _this.triggerOnChange();
+      _this.triggerOnChange('undo');
     };
 
     _this.getSaveData = function () {
@@ -158,7 +158,7 @@ var _default = (_temp = _class = function (_PureComponent) {
 
           // Save line with the drawn points
           _this.points = points;
-          _this.saveLine({ brushColor: brushColor, brushRadius: brushRadius });
+          _this.saveLine({ brushColor: brushColor, brushRadius: brushRadius }, true);
           return;
         }
 
@@ -183,7 +183,7 @@ var _default = (_temp = _class = function (_PureComponent) {
         window.setTimeout(function () {
           // Save this line with its props instead of this.props
           _this.points = points;
-          _this.saveLine({ brushColor: brushColor, brushRadius: brushRadius });
+          _this.saveLine({ brushColor: brushColor, brushRadius: brushRadius }, true);
         }, curTime);
       });
     };
@@ -387,11 +387,12 @@ var _default = (_temp = _class = function (_PureComponent) {
       // Clear the temporary line-drawing canvas
       _this.ctx.temp.clearRect(0, 0, width, height);
 
-      _this.triggerOnChange();
+			if (!arguments[1])
+      	_this.triggerOnChange('line');
     };
 
-    _this.triggerOnChange = function () {
-      _this.props.onChange && _this.props.onChange(_this);
+    _this.triggerOnChange = function (action) {
+      _this.props.onChange && _this.props.onChange(_this, action);
     };
 
     _this.clear = function () {

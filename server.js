@@ -38,6 +38,13 @@ io.on('connection', socket => {
 			socket.join(id);
 			socketRoom = id;
 			socket.emit("join-room", id);
+			const message = {
+				type: 'join',
+				id: uuid(),
+				timestamp: new Date().getTime(),
+				author: socket.id
+			};
+			io.to(socketRoom).emit('chat', message);
 		});
 		socket.on("join-room", id => {
 			console.log("[JOIN]", socket.id, id);
@@ -58,6 +65,13 @@ io.on('connection', socket => {
 				rooms: Object.values(rooms)
 			});
 			socket.emit("join-room", id);
+			const message = {
+				type: 'join',
+				id: uuid(),
+				timestamp: new Date().getTime(),
+				author: socket.id
+			};
+			io.to(socketRoom).emit('chat', message);
 		});
 		socket.on("leave-room", (id) => {
 			console.log("[LEAVE]", socket.id, id);
@@ -82,6 +96,70 @@ io.on('connection', socket => {
 			io.emit("update-rooms", {
 				rooms: Object.values(rooms)
 			});
+			const message = {
+				type: 'leave',
+				id: uuid(),
+				timestamp: new Date().getTime(),
+				author: socket.id
+			};
+			io.to(id).emit('chat', message);
+		});
+		socket.on('chat', message => {
+			if (!socketRoom) {
+				socket.emit("err", "You are not in a room");
+			} else if (!message) {
+				socket.emit("err", "Cannot send an empty message");
+			} else {
+				const room = rooms[socketRoom];
+				if (!room) {
+					socket.emit("err", "Nonexistant room");
+					return;
+				}
+				const msg = {
+					type: 'chat',
+					id: uuid(),
+					important: socket.id === room.owner,
+					text: message,
+					timestamp: new Date().getTime(),
+					author: socket.id
+				};
+				io.to(socketRoom).emit('chat', msg);
+			}
+		});
+		socket.on('whiteboard', data => {
+			if (!socketRoom) {
+				socket.emit("err", "You are not in a room");
+			} else if (!data) {
+				socket.emit("err", "Cannot send empty data");
+			} else {
+				const room = rooms[socketRoom];
+				if (!room) {
+					socket.emit("err", "Nonexistant room");
+					return;
+				}
+				if (room.owner !== socket.id) {
+					socket.emit("err", "Cannot send whiteboard data as a student");
+					return;
+				}
+				if (data.target) {
+					socket.to(data.target).emit('whiteboard', {
+						timestamp: new Date().getTime(),
+						data: {
+							type: data.type,
+							lines: data.lines
+						}
+					});
+				} else {
+					socket.to(socketRoom).broadcast.emit('whiteboard', {
+						timestamp: new Date().getTime(),
+						data: {
+							type: data.type,
+							lines: data.lines
+						}
+					});
+
+				}
+			}
 		});
 
 		// socket.emit("update-user-list", {

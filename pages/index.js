@@ -1,9 +1,10 @@
+import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, Card, Dialog, DialogTitle, TextField, DialogContent, DialogActions, DialogContentText } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import io from 'socket.io-client';
 import Rooms from '../src/Rooms';
 
-// const Rooms = dynamic(() => import('../src/Rooms'), { ssr: false });
+export const SocketContext = React.createContext();
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -78,7 +79,6 @@ export default function HomePage() {
 		});
 		setCreateRoomOpen(false);
 	}
-console.log(rooms);
 	return (
 		<Box className={classes.root}>
 			<AppBar position="static">
@@ -89,17 +89,19 @@ console.log(rooms);
 					<Button color="inherit" className={classes.login}>Login</Button>
 				</Toolbar>
 			</AppBar>
-			<Rooms
-				inRoom={inRoom}
-				rooms={rooms.filter(r => r.people.length > 0)}
-				onClick={({ id }) => socket.current.emit("join-room", id)}
-				onExit={() => socket.current.emit("leave-room", inRoom)}
-				onCreateRoom={() => {
-					setNewRoomName("New Classroom");
-					setNewRoomColor(randomColor());
-					setCreateRoomOpen(true);
-				}}
-			/>
+			<SocketContext.Provider value={socket.current}>
+				<Rooms
+					inRoom={inRoom}
+					rooms={rooms.filter(r => r.people.length > 0)}
+					onClick={({ id }) => socket.current.emit("join-room", id)}
+					onExit={() => socket.current.emit("leave-room", inRoom)}
+					onCreateRoom={() => {
+						setNewRoomName("New Classroom");
+						setNewRoomColor(randomColor());
+						setCreateRoomOpen(true);
+					}}
+				/>
+			</SocketContext.Provider>
 			<Dialog open={createRoomOpen} onClose={() => setCreateRoomOpen(false)}>
 				<DialogTitle>Create Classroom</DialogTitle>
 				<DialogContent>
