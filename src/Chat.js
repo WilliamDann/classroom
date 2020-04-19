@@ -7,19 +7,27 @@ import { SocketContext } from '../pages/index';
 
 const useStyles = makeStyles((theme) => ({
 	list: {
-		flexGrow: 1
+		flexGrow: 1,
+    overflowY: 'auto',
+    height: 'calc(100% - 56px)'
 	}
 }));
 
-function ChatMessage({ message }) {
+function getName(author, room) {
+	let index = room.people.indexOf(author);
+	return room.names[index];
+}
+
+function ChatMessage({ message, room }) {
 	const timestampString = moment(message.timestamp).format("LTS");
+	let name = getName(message.author, room);
 	let body;
 	switch (message.type) {
 		case "chat":
 			body =
 				<ListItemText
 					disableTypography
-					primary={<Typography style={message.important ? { color: '#9b59b6', fontWeight: 'bold' } : {}}>{message.author}</Typography>}
+					primary={<Typography style={message.important ? { color: '#9b59b6', fontWeight: 'bold' } : {}}>{name}</Typography>}
 					secondary={<Typography>{message.text}</Typography>}
 				/>;
 			break;
@@ -33,14 +41,14 @@ function ChatMessage({ message }) {
 		case "join":
 			body =
 				<ListItemText
-					primary={`${message.author} joined`}
+					primary={`${name} joined`}
 					secondary={timestampString}
 				/>;
 			break;
 		case "leave":
 			body =
 				<ListItemText
-					primary={`${message.author} left`}
+					primary={`${name} left`}
 					secondary={timestampString}
 				/>;
 			break;
@@ -48,22 +56,24 @@ function ChatMessage({ message }) {
 	return (
 		<ListItem title={timestampString}>
 			<ListItemAvatar>
-				<Avatar style={message.important ? { backgroundColor: '#9b59b6' } : {}}>{message.author[0].toUpperCase()}</Avatar>
+				<Avatar style={message.important ? { backgroundColor: '#9b59b6' } : {}}>{name[0].toUpperCase()}</Avatar>
 			</ListItemAvatar>
 			{body}
 		</ListItem>
 	)
 }
 
-export function Chat() {
+export function Chat({room}) {
 	const classes = useStyles();
 	const [history, setHistory] = React.useReducer((state, action) => state.concat(action), []);
 	const [message, setMessage] = React.useState('');
+	const list = React.useRef();
 
 	const socket = React.useContext(SocketContext);
 	React.useEffect(() => {
 		const chat = (message) => {
 			setHistory(message);
+			list.current.scrollTo(0, list.current.scrollHeight);
 		};
 		socket.on('chat', chat);
 		return () => socket.off('chat', chat);
@@ -77,9 +87,9 @@ export function Chat() {
 
 	return (
 		<Box display="flex" flexDirection="column" height="100%">
-			<List className={classes.list}>
+			<List className={classes.list} ref={list}>
 				{history.map((message) => (
-					<ChatMessage key={message.id} message={message} />
+					<ChatMessage key={message.id} room={room} message={message} />
 				))}
 			</List>
 			<TextField

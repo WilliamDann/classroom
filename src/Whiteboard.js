@@ -195,6 +195,7 @@ export function Whiteboard({ room }) {
 			</Paper>}
 			<CanvasDraw
 				onChange={sendDraw}
+				lazyRadius={5}
 				immediateLoading={true}
 				className={classes.canvas}
 				ref={canvas}

@@ -10,18 +10,42 @@ const nextApp = next({ dev })
 const nextHandler = nextApp.getRequestHandler();
 
 // fake DB
+const names = {};
 const rooms = {};
 const sockets = new Set();
 
+function broadcastRooms() {
+	Object.values(io.sockets.sockets).forEach(socket => {
+		socket.emit("update-rooms", {
+			rooms: Object.values(rooms)
+				.filter(room => !room.hidden || room.people.includes(socket.id))
+				.map(room => ({
+					...room,
+					password: !!room.password,
+					names: room.people.includes(socket.id) ? room.people.map(p => names[p]) : []
+				}))
+		});
+	})
+}
 io.on('connection', socket => {
 	if (!sockets.has(socket.id)) {
 		sockets.add(socket.id);
+		socket.on('set-name', name => {
+			if (!name) {
+				socket.emit("err", "Invalid Name");
+				return;
+			}
+			names[socket.id] = name;
+			socket.emit('ready', name);
+		});
 		let socketRoom = null;
 		console.log("[CONNECT]", socket.id);
 		socket.emit("update-rooms", {
 			rooms: Object.values(rooms)
+				.filter(room => !room.hidden)
 		});
 		socket.on("create-room", (room) => {
+			if (!names[socket.id]) return;
 			if (!room.name || !room.color) return;
 			const id = uuid();
 			console.log("[CREATE]", socket.id, room.name, id);
@@ -29,12 +53,12 @@ io.on('connection', socket => {
 				id,
 				name: room.name,
 				color: room.color,
+				hidden: room.hidden,
+				password: room.password,
 				people: [socket.id],
 				owner: socket.id
 			};
-			io.emit("update-rooms", {
-				rooms: Object.values(rooms)
-			});
+			broadcastRooms(io, socket);
 			socket.join(id);
 			socketRoom = id;
 			socket.emit("join-room", id);
@@ -46,7 +70,8 @@ io.on('connection', socket => {
 			};
 			io.to(socketRoom).emit('chat', message);
 		});
-		socket.on("join-room", id => {
+		socket.on("join-room", ({ id, password }) => {
+			if (!names[socket.id]) return;
 			console.log("[JOIN]", socket.id, id);
 			const room = rooms[id];
 			if (socketRoom) {
@@ -57,13 +82,15 @@ io.on('connection', socket => {
 				socket.emit("err", "Nonexistant room");
 				return;
 			}
+			if (room.password && room.password !== password) {
+				socket.emit("err", "Incorrect password");
+				return;
+			}
 			socketRoom = id;
 			socket.leave('lobby');
 			room.people.push(socket.id);
 			socket.join(id); socketRoom = id;
-			io.emit("update-rooms", {
-				rooms: Object.values(rooms)
-			});
+			broadcastRooms(io, socket);
 			socket.emit("join-room", id);
 			const message = {
 				type: 'join',
@@ -74,6 +101,7 @@ io.on('connection', socket => {
 			io.to(socketRoom).emit('chat', message);
 		});
 		socket.on("leave-room", (id) => {
+			if (!names[socket.id]) return;
 			console.log("[LEAVE]", socket.id, id);
 			const room = rooms[id];
 			if (!socketRoom) {
@@ -93,9 +121,7 @@ io.on('connection', socket => {
 				delete rooms[id];
 				socket.to(id).emit("leave-room");
 			}
-			io.emit("update-rooms", {
-				rooms: Object.values(rooms)
-			});
+			broadcastRooms(io, socket);
 			const message = {
 				type: 'leave',
 				id: uuid(),
@@ -105,6 +131,7 @@ io.on('connection', socket => {
 			io.to(id).emit('chat', message);
 		});
 		socket.on('chat', message => {
+			if (!names[socket.id]) return;
 			if (!socketRoom) {
 				socket.emit("err", "You are not in a room");
 			} else if (!message) {
@@ -127,6 +154,7 @@ io.on('connection', socket => {
 			}
 		});
 		socket.on('whiteboard', data => {
+			if (!names[socket.id]) return;
 			if (!socketRoom) {
 				socket.emit("err", "You are not in a room");
 			} else if (!data) {
@@ -161,6 +189,50 @@ io.on('connection', socket => {
 				}
 			}
 		});
+		socket.on('join-video', () => {
+			if (!names[socket.id]) return;
+			if (!socketRoom) {
+				socket.emit("err", "You are not in a room");
+			} else {
+				const room = rooms[socketRoom];
+				if (!room) {
+					socket.emit("err", "Nonexistant room");
+					return;
+				}
+				socket.to(socketRoom).broadcast.emit('join-video', {
+					id: socket.id
+				});
+			}
+		});
+		socket.on('leave-video', () => {
+			if (!names[socket.id]) return;
+			if (!socketRoom) {
+				socket.emit("err", "You are not in a room");
+			} else {
+				const room = rooms[socketRoom];
+				if (!room) {
+					socket.emit("err", "Nonexistant room");
+					return;
+				}
+				socket.to(socketRoom).broadcast.emit('leave-video', {
+					id: socket.id
+				});
+			}
+		});
+		socket.on("call-user", data => {
+			console.log("Call from", socket.id, "to", data.to);
+			socket.to(data.to).emit("call-made", {
+				offer: data.offer,
+				socket: { id: socket.id }
+			});
+		});
+		socket.on("make-answer", data => {
+			console.log("Answer from", socket.id, "to", data.to);
+			socket.to(data.to).emit("answer-made", {
+				socket: socket.id,
+				answer: data.answer
+			});
+		});
 
 		// socket.emit("update-user-list", {
 		// 	users: Array.from(sockets.values())
@@ -168,24 +240,11 @@ io.on('connection', socket => {
 		// socket.broadcast.emit("update-user-list", {
 		// 	users: Array.from(sockets.values())
 		// });
-		// socket.on("call-user", data => {
-		// 	console.log("Call from", socket.id, "to", data.to);
-		// 	socket.to(data.to).emit("call-made", {
-		// 		offer: data.offer,
-		// 		socket: socket.id
-		// 	});
-		// });
-		// socket.on("make-answer", data => {
-		// 	console.log("Answer from", socket.id, "to", data.to);
-		// 	socket.to(data.to).emit("answer-made", {
-		// 		socket: socket.id,
-		// 		answer: data.answer
-		// 	});
-		// });
 
 		socket.on("disconnect", () => {
 			console.log("[DISCONNECT]", socket.id);
 			sockets.delete(socket.id);
+			delete names[socket.id];
 			const id = socketRoom;
 			const room = rooms[id];
 			if (room) {
@@ -194,9 +253,7 @@ io.on('connection', socket => {
 					delete rooms[id];
 					socket.to(id).emit("leave-room");
 				}
-				io.emit("update-rooms", {
-					rooms: Object.values(rooms)
-				});
+				broadcastRooms(io, socket);
 			}
 		});
 	}

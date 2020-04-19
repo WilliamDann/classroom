@@ -1,17 +1,22 @@
-import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar, Fade, Box, Button } from '@material-ui/core';
-import { ExitToApp, AccountMultiple as People, Table, TableEdit, Plus } from 'mdi-material-ui';
+import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar, Fade, Box, Badge } from '@material-ui/core';
+import { ExitToApp, AccountMultiple as People, Table, TableEdit, Plus, Share, Lock } from 'mdi-material-ui';
 import { makeStyles } from '@material-ui/core/styles';
 import { Responsive } from 'react-grid-layout';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { SocketContext } from '../pages/index';
+
 
 import { Whiteboard } from './Whiteboard';
 import { Chat } from './Chat';
+import Video from './Video';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
 	root: {
 		width: '100%',
 		height: '100%',
 		transition: '1s',
 		backgroundColor: props => props.selected ? 'initial' : props.room.color,
+		color: props => props.selected ? 'initial' : theme.palette.getContrastText(props.room.color),
 		cursor: props => props.selected ? 'default' : 'pointer'
 	},
 	placeholder: {
@@ -36,7 +41,8 @@ const useStyles = makeStyles(() => ({
 		}
 	},
 	title: {
-		flexGrow: 1
+		flexGrow: 1,
+		color: 'white'
 	},
 	drawer: {
 		width: 300
@@ -87,6 +93,8 @@ const useStyles = makeStyles(() => ({
 function RoomContents(props) {
 	const { room, onClick, selected, onExit, height, width } = props;
 	const [drawerOpen, setDrawerOpen] = React.useState(false);
+	const selfVideoContainer = React.useRef();
+	const socket = React.useContext(SocketContext);
 
 	const layout = [
 		{ i: 'whiteboard', x: 0, y: 0, w: 2, h: 4, minW: 2 },
@@ -111,24 +119,34 @@ function RoomContents(props) {
 		<div style={props.style}>
 			<Toolbar>
 				<Typography variant="h6" className={classes.title}>{room.name}{editingLayout && " - editing layout"}</Typography>
-				<IconButton onClick={() => setEditingLayout(!editingLayout)} >
+				<IconButton onClick={() => setEditingLayout(!editingLayout)} title="Edit Room Layout">
 					{editingLayout ? <Table /> : <TableEdit />}
 				</IconButton>
-				<IconButton onClick={() => setDrawerOpen(true)} >
-					<People />
+				<CopyToClipboard text={window.location.origin + '/?room=' + room.id}>
+					<IconButton title="Copy Room Link">
+						<Share />
+					</IconButton>
+				</CopyToClipboard>
+				<IconButton onClick={() => setDrawerOpen(true)} title="View Participants">
+					<Badge badgeContent={room.people.length}>
+						<People />
+					</Badge>
 				</IconButton>
-				<IconButton onClick={onExit} >
+				<IconButton onClick={onExit} title="Leave Room">
 					<ExitToApp />
 				</IconButton>
 			</Toolbar>
 			<Drawer anchor='right' open={drawerOpen} onClose={() => setDrawerOpen(false)} >
 				<List className={classes.drawer}>
-					{room.people.map((person, i) => (
-						<ListItem key={i} button>
-							<ListItemAvatar><Avatar>{person[0].toUpperCase()}</Avatar></ListItemAvatar>
-							<ListItemText>{person}</ListItemText>
-						</ListItem>
-					))}
+					{room.people.map((person, i) => {
+						let name = getName(person, room);
+						return (
+							<ListItem key={i} button>
+								<ListItemAvatar><Avatar>{name[0].toUpperCase()}</Avatar></ListItemAvatar>
+								<ListItemText>{name} {room.owner === person && '(Teacher)'} {person === socket.id && '(You)'}</ListItemText>
+							</ListItem>
+						);
+					})}
 				</List>
 			</Drawer>
 			<Responsive
@@ -160,7 +178,7 @@ function RoomContents(props) {
 						<Typography variant="h4" align="center">Chat</Typography>
 					</Box>
 					<div style={editingHidden}>
-						<Chat />
+						<Chat room={room} />
 					</div>
 				</Card>
 				<Card key="video" variant="outlined">
@@ -169,7 +187,7 @@ function RoomContents(props) {
 						<Typography variant="h4" align="center">Video</Typography>
 					</Box>
 					<div style={editingHidden}>
-						Video
+						<Video selfVideoContainer={selfVideoContainer} />
 					</div>
 				</Card>
 				<Card key="selfvideo" variant="outlined">
@@ -177,8 +195,7 @@ function RoomContents(props) {
 						<span className={classes.dragHandle} />
 						<Typography variant="h4" align="center">Webcam</Typography>
 					</Box>
-					<div style={editingHidden}>
-						Self-Video
+					<div style={editingHidden} ref={selfVideoContainer}>
 					</div>
 				</Card>
 			</Responsive>
@@ -187,14 +204,18 @@ function RoomContents(props) {
 }
 
 export function PlaceholderRoom({ onClick }) {
-	const classes = useStyles({ room: {} });
+	const classes = useStyles({ room: { color: '#525252' } });
 	return (
 		<Card className={classes.placeholder} onClick={onClick}>
 			<Plus fontSize='large' />
 		</Card>
 	);
-
 }
+function getName(author, room) {
+	let index = room.people.indexOf(author);
+	return room.names[index];
+}
+
 
 export default function Room(props) {
 	const { onClick, selected } = props;
@@ -204,6 +225,7 @@ export default function Room(props) {
 			{!selected && <Box display="flex" flexDirection="column" height="100%" justifyContent="center" alignItems="center">
 				<Typography variant="h6">{props.room.name}</Typography>
 				<Typography variant="body1">{props.room.people.length} {props.room.people.length === 1 ? 'person' : 'people'}</Typography>
+				{props.room.password && <Lock />}
 			</Box>}
 			<Fade in={selected} timeout={1000} mountOnEnter={true} unmountOnExit={true} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
 				<RoomContents {...props} />
