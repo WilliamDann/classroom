@@ -19,7 +19,10 @@ export default function LoginDialog({ open, onClose, onSubmit }) {
 		<Dialog open={open} onClose={onClose}>
 			<DialogTitle>Login</DialogTitle>
 			<DialogContent>
-				<TextField onKeyDown={(e) => e.keyCode === 13 && onSubmit(nick)} autoFocus label="Nickname" variant="outlined" fullWidth value={nick} onChange={(ev) => setNick(ev.target.value)} />
+				<TextField onKeyDown={(e) => {
+					e.preventDefault();
+					if (e.keyCode === 13) onSubmit(nick);
+				}} autoFocus label="Nickname" variant="outlined" fullWidth value={nick} onChange={(ev) => setNick(ev.target.value)} />
 			</DialogContent>
 			<DialogActions>
 				<Button onClick={onClose}>Cancel</Button>
