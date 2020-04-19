@@ -1,5 +1,5 @@
 import { Toolbar, Typography, Avatar, Card, IconButton, Drawer, List, ListItem, ListItemText, ListItemAvatar, Fade, Box, Button } from '@material-ui/core';
-import { ExitToApp, AccountMultiple as People, Table, TableEdit } from 'mdi-material-ui';
+import { ExitToApp, AccountMultiple as People, Table, TableEdit, Plus } from 'mdi-material-ui';
 import { makeStyles } from '@material-ui/core/styles';
 import { Responsive } from 'react-grid-layout';
 
@@ -14,11 +14,32 @@ const useStyles = makeStyles(() => ({
 		backgroundColor: props => props.selected ? 'initial' : props.room.color,
 		cursor: props => props.selected ? 'default' : 'pointer'
 	},
+	placeholder: {
+		width: '100%',
+		height: '100%',
+		transition: '.2s',
+		border: '2px dashed #525252',
+		background: 'transparent',
+		'&:hover': {
+			background: '#5252522d',
+			cursor: 'pointer'
+		},
+		'&>.MuiSvgIcon-root': {
+			display: 'block',
+			top: '50%',
+			left: '50%',
+			position: 'relative',
+			transform: 'translate(-50%, -50%)',
+			color: '#525252',
+			textAlign: 'center',
+			fontSize: '48px'
+		}
+	},
 	title: {
 		flexGrow: 1
 	},
 	drawer: {
-		width: 250
+		width: 300
 	},
 	grid: {
 		'&>.react-grid-item': {
@@ -165,11 +186,25 @@ function RoomContents(props) {
 	);
 }
 
+export function PlaceholderRoom({ onClick }) {
+	const classes = useStyles({ room: {} });
+	return (
+		<Card className={classes.placeholder} onClick={onClick}>
+			<Plus fontSize='large' />
+		</Card>
+	);
+
+}
+
 export default function Room(props) {
 	const { onClick, selected } = props;
 	const classes = useStyles(props);
 	return (
 		<Card className={classes.root} onClick={selected ? null : onClick}>
+			{!selected && <Box display="flex" flexDirection="column" height="100%" justifyContent="center" alignItems="center">
+				<Typography variant="h6">{props.room.name}</Typography>
+				<Typography variant="body1">{props.room.people.length} {props.room.people.length === 1 ? 'person' : 'people'}</Typography>
+			</Box>}
 			<Fade in={selected} timeout={1000} mountOnEnter={true} unmountOnExit={true} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
 				<RoomContents {...props} />
 			</Fade>

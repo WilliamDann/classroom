@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTransition, a } from 'react-spring';
 import ResizeObserver from 'resize-observer-polyfill';
-import Room from './Room';
+import Room, { PlaceholderRoom } from './Room';
 import { makeStyles } from '@material-ui/core/styles';
 
 function useMedia(queries, values, defaultValue) {
@@ -41,7 +41,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 export default function Rooms(props) {
-	const { rooms, inRoom, onClick, onExit } = props;
+	const { rooms, inRoom, onClick, onExit, onCreateRoom } = props;
 	const classes = useStyles(props);
 	const columns = useMedia(['(min-width: 1500px)', '(min-width: 1000px)', '(min-width: 600px)', '(min-width: 400px)'], [5, 4, 3, 2], 1);
 	const [bind, { width, height }] = useMeasure();
@@ -49,7 +49,7 @@ export default function Rooms(props) {
 	const items = rooms;
 
 	let heights = new Array(columns).fill(inRoom ? height : 0);
-	let gridItems = items.map((child, i) => {
+	let gridItems = items.concat('new').map((child, i) => {
 		if (inRoom === child.id) {
 			return { room: child, xy: [0, 0], width, height };
 		} else {
@@ -70,17 +70,20 @@ export default function Rooms(props) {
 		<div {...bind} className={classes.root}>
 			{transitions.map(({ item, props: { xy, ...rest }, key }) => (
 				<a.div key={key} className={classes.item} style={{ transform: xy.interpolate((x, y) => `translate3d(${x}px,${y}px,0)`), ...rest }}>
-					<Room
-						room={item.room}
-						selected={inRoom === item.room.id}
-						onClick={() => {
-							bind.ref.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-							onClick(item.room);
-						}}
-						onExit={onExit}
-						height={item.height}
-						width={item.width}
-					/>
+					{item.room === 'new' ?
+						<PlaceholderRoom onClick={onCreateRoom} /> :
+						<Room
+							room={item.room}
+							selected={inRoom === item.room.id}
+							onClick={() => {
+								bind.ref.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+								onClick(item.room);
+							}}
+							onExit={onExit}
+							height={item.height}
+							width={item.width}
+						/>
+					}
 				</a.div>
 			))}
 		</div>
