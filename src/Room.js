@@ -105,8 +105,8 @@ function RoomContents(props) {
 	const smallLayout = [
 		{ i: 'whiteboard', x: 0, y: 0, w: 2, h: 2, minW: 2 },
 		{ i: 'chat', x: 0, y: 2, w: 1, h: 2 },
-		{ i: 'video', x: 1, y: 2, w: 1, h: 2 },
-		{ i: 'selfvideo', x: 0, y: 4, w: 2, h: 1 },
+		{ i: 'video', x: 1, y: 2, w: 1, h: 1 },
+		{ i: 'selfvideo', x: 1, y: 3, w: 1, h: 1 },
 	];
 
 	const [editingLayout, setEditingLayout] = React.useState(false);
