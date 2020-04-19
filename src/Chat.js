@@ -15,7 +15,11 @@ const useStyles = makeStyles((theme) => ({
 
 function getName(author, room) {
 	let index = room.people.indexOf(author);
-	return room.names[index];
+	if (room.names[index]) {
+		return room.names[index];
+	} else {
+		return author;
+	}
 }
 
 function ChatMessage({ message, room }) {
