@@ -24,8 +24,10 @@ export default function Video({ selfVideoContainer }) {
 	const [inVideo, setInVideo] = React.useState(false);
 	const inVideoR = React.useRef(false);
 	const [canJoinVideo, setCanJoinVideo] = React.useState(false);
+	const videoIncompatible = !navigator.getUserMedia;
 
 	React.useEffect(() => {
+		if (videoIncompatible) return;
 		navigator.getUserMedia(
 			{ video: { width: 240, height: 240 } },
 			lS => {
@@ -124,6 +126,7 @@ export default function Video({ selfVideoContainer }) {
 
 	return (
 		<div>
+			{videoIncompatible && "Your device is incompatible with video chat"}
 			{Object.keys(remoteUsers).map(user => (
 				<video autoPlay key={user} ref={el => videoRefs.current[user] = el} />
 			))}
